@@ -1,0 +1,74 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+flask_server/.env
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+src/config.py
+
+# ignore all mp4 files
+flask_server/*.mp4
+
+# ignore all homework files
+/homework
+
+# ignore actual build file
+/dist
+
+# ignore all flask venv
+/flask_server/flask_venv
+
+# ignore all python cache files
+__pycache__/
+
+# ignore pki verification I think for gabia https
+.well-known
+
+# ignore fonts
+/src/fonts
+
+# ignore env file
+env.local
+/frontend/.env
+/frontend/.env.production
+/backend/.env
+
+
+# ignore all secret files
+/backend/secret_db_config.py
+/backend/secret.py
+/backend/kakao_rest_api_config.py
+/backend/zoom_api_config.py
+
+# ignore .cursor rules (because I included passwords in them)
+.cursor
+
+# ignore mysql init files
+/mysql-init
+
+# ignore venv
+/venv
+
+/frontend/node_modules
+
+/certbot

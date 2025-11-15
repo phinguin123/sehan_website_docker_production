@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"name": "sehan_website",
+			"path": "."
+		}
+	],
+	"settings": {
+		"javascript.updateImportsOnFileMove.enabled": "always"
+	}
+}

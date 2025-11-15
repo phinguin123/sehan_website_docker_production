@@ -1,0 +1,134 @@
+
+services: # 2. Defines all the individual components of your application
+  backend: # 3. Service name for your Flask application
+    build: 
+      context: ./backend # 4. Tells Docker Compose to build an image from the Dockerfile in the './backend' directory
+      dockerfile: Dockerfile.backend
+    container_name: flask_backend # 5. Assigns a specific name to the running container
+    restart: unless-stopped # 6. Restarts the container automatically unless explicitly stopped
+    env_file: # 7. Load environment variables from file
+      - env.local
+    environment: # 8. Additional environment variables
+      FLASK_ENV: development
+      DATABASE_HOST: db
+      DATABASE_PORT: 3306
+    ports: # 8. Maps ports from your host machine to the container (HOST_PORT:CONTAINER_PORT)
+      - "5000:5000" # Access Flask directly via localhost:5000 (optional if only Nginx will access)
+    volumes: # 9. Mounts paths from your host to the container for data persistence or code sync
+      - ./backend:/app # Mounts your local './backend' directory to '/app' inside the container (useful for dev)
+    depends_on: # 10. Specifies that this service depends on 'db'; 'db' will start first
+      - db
+
+  frontend: # 3. Service name for your Vite/Nginx frontend static files
+    build: 
+      context: ./frontend # 4. Build from Dockerfile in './frontend'
+      dockerfile: Dockerfile.frontend
+    container_name: vite_frontend # 5. Specific container name
+    restart: unless-stopped # 6. Restart policy
+    ports: # 8. Map ports
+      - "8080:80" # Access frontend directly via localhost:8080 (optional if only Nginx will access)
+    volumes: # 9. Mounts for build context
+      - ./frontend:/app # Mounts local './frontend' for the build stage (optional once built)
+    depends_on:
+      - backend # Frontend might depend on backend if it needs to know backend's internal IP for some reason, otherwise not strictly necessary if Nginx proxies
+
+  nginx: # 3. Service name for your main Nginx reverse proxy
+    image: nginx:alpine 
+    container_name: main_nginx # 5. Specific container name
+    restart: unless-stopped # 6. Restart policy
+    ports: # 8. Map ports
+      - "80:80" # Maps host's port 80 to Nginx container's port 80 (this is your main entry point)
+      # - "443:443" # Uncomment if you configure TLS inside the container
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/sites-enabled/docker-dev.conf:/etc/nginx/sites-enabled/default:ro
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on: # 10. Ensures backend and frontend are running before Nginx starts proxying
+      - backend
+      - frontend
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+
+  redis: # Redis service for Celery message broker
+    image: redis:7-alpine
+    container_name: redis_broker
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  celery-worker: # Celery worker for processing background tasks
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: celery_worker
+    restart: unless-stopped
+    env_file:
+      - env.local
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    command: ["./start.sh", "worker"]
+    depends_on:
+      - redis
+      - db
+
+  celery-beat: # Celery beat scheduler for periodic tasks
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: celery_beat
+    restart: unless-stopped
+    env_file:
+      - env.local
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    command: ["./start.sh", "beat"]
+    depends_on:
+      - redis
+      - db
+
+  flower: # Flower for monitoring Celery tasks (optional)
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    container_name: flower_monitor
+    restart: unless-stopped
+    env_file:
+      - env.local
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    command: ["./start.sh", "flower"]
+    depends_on:
+      - redis
+
+  db: # 3. Service name for your MySQL database
+    image: mysql:8.0 # 4. Instead of 'build', this uses a pre-built image from Docker Hub
+    container_name: mysql_db # 5. Specific container name
+    restart: unless-stopped # 6. Restart policy
+    env_file: # 7. Load environment variables from file
+      - env.local
+    environment: # 8. Additional environment variables for charset
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    volumes: # 9. Mounts for data persistence and initial scripts
+      - db_data:/var/lib/mysql # Persistent volume to store MySQL data
+      - ./mysql-init:/docker-entrypoint-initdb.d # Optional: Mount directory for init scripts
+      - ./mysql/my.cnf:/etc/mysql/conf.d/custom.cnf:ro # Custom MySQL configuration
+    ports: # 8. Map ports (optional for internal network, useful for connecting with GUI tools from host)
+      - "3306:3306" # Expose MySQL port directly to host (e.g., for MySQL Workbench)
+
+volumes: # 11. Defines named volumes for data persistence
+  db_data: # This volume will store your MySQL data outside the container, so it persists even if the 'db' container is recreated.
+  redis_data: # Redis data persistence

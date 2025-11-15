@@ -1,0 +1,108 @@
+/* 
+.widget {
+    margin: 0 auto;
+    width:350px;
+    margin-top:50px;
+    background-color: #222D3A;
+    border-radius: 5px;
+    box-shadow: 0px 0px 1px 0px #06060d;
+
+}
+
+.header{
+    background-color: #29384D;
+    height:40px;
+    color:#929DAF;
+    text-align: center;
+    line-height: 40px;
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
+    font-weight: 400;
+    font-size: 1.5em;
+    text-shadow: 1px 1px #06060d;
+}
+
+.chart-container{
+    padding:25px;
+}
+
+.shadow {
+    -webkit-filter: drop-shadow( 0px 3px 3px rgba(0,0,0,.5) );
+    filter: drop-shadow( 0px 3px 3px rgba(0,0,0,.5) );
+} */
+
+/* Fix for CoreUI sidebar navigation dropdown visibility - More specific selectors */
+.sidebar .sidebar-nav .nav-group {
+    position: relative !important;
+}
+
+.sidebar .sidebar-nav .nav-group-items {
+    padding: 0 !important;
+    list-style: none !important;
+    overflow: hidden !important;
+    transition: height 0.15s ease !important;
+    display: none !important;
+}
+
+.sidebar .sidebar-nav .nav-group:not(.show) .nav-group-items {
+    display: none !important;
+}
+
+.sidebar .sidebar-nav .nav-group.show .nav-group-items {
+    display: block !important;
+}
+
+.sidebar .sidebar-nav .nav-group-toggle {
+    cursor: pointer !important;
+}
+
+.sidebar .sidebar-nav .nav-group-toggle::after {
+    display: block !important;
+    flex: 0 12px !important;
+    height: 12px !important;
+    margin-left: auto !important;
+    content: "" !important;
+    background-color: var(--cui-sidebar-nav-group-indicator-color, #6c757d) !important;
+    mask-image: var(--cui-sidebar-nav-group-indicator-icon, url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708'/></svg>")) !important;
+    transition: transform 0.15s !important;
+}
+
+.sidebar .sidebar-nav .nav-group.show > .nav-group-toggle::after {
+    transform: rotate(180deg) !important;
+}
+
+/* Ensure proper spacing and visibility */
+.sidebar .sidebar-nav .nav-group-items .nav-link {
+    padding-left: calc(var(--cui-sidebar-nav-link-padding-x, 0.5rem) + var(--cui-sidebar-nav-link-icon-width, 1.5rem) + var(--cui-sidebar-nav-link-icon-margin, 0.5rem)) !important;
+}
+
+.sidebar .sidebar-nav .nav-group-items .nav-icon {
+    margin-left: calc((var(--cui-sidebar-nav-link-icon-width, 1.5rem) + var(--cui-sidebar-nav-link-icon-margin, 0.5rem)) * -1) !important;
+}
+
+/* Additional fallback styles for better visibility */
+.sidebar .sidebar-nav .nav-group-items {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.sidebar .sidebar-nav .nav-group-items .nav-link {
+    color: var(--cui-sidebar-nav-link-color, #fff) !important;
+    padding: 0.5rem 1rem !important;
+    display: block !important;
+    text-decoration: none !important;
+}
+
+.sidebar .sidebar-nav .nav-group-items .nav-link:hover {
+    background-color: var(--cui-sidebar-nav-link-hover-bg, rgba(255, 255, 255, 0.1)) !important;
+    color: var(--cui-sidebar-nav-link-hover-color, #fff) !important;
+}
+
+/* Force visibility for debugging */
+.sidebar .sidebar-nav .nav-group.show .nav-group-items {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    max-height: none !important;
+}

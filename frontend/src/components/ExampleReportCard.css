@@ -1,0 +1,304 @@
+/* Example Report Page Styling */
+.example-report-page {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: linear-gradient(to bottom, #f0fdf4, #fef3c7);
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+/* Example Report Card Styling */
+.example-report-card {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+
+.report-container {
+  max-width: 384px;
+  margin: 0 auto;
+  background: transparent;
+  padding: 20px 0;
+}
+
+/* Header Styles */
+.report-header {
+  background: linear-gradient(to right, #86efac, #fbbf24);
+  color: white;
+  position: relative;
+}
+
+.header-content {
+  padding: 1.5rem;
+  padding-bottom: 3rem;
+}
+
+.academy-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.student-info {
+  text-align: center;
+}
+
+.student-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.student-details {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  margin-bottom: 0.75rem;
+}
+
+.score-badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(4px);
+  border-radius: 9999px;
+  padding: 0.5rem 1rem;
+}
+
+.score-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.score-max {
+  font-size: 0.75rem;
+}
+
+.header-curve {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1.5rem;
+  background: linear-gradient(to bottom, #f0fdf4, #fef3c7);
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+/* Content Styles */
+.report-content {
+  padding: 1rem;
+  margin-top: -1.5rem;
+}
+
+.report-section {
+  background: white;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  margin-bottom: 1rem;
+}
+
+.report-section.parent-message {
+  border-left: 4px solid #86efac;
+}
+
+.report-section.observations {
+  border-left: 4px solid #fbbf24;
+}
+
+.report-section.action-plan {
+  border-left: 4px solid #86efac;
+}
+
+.report-section.session-timeline {
+  border-left: 4px solid #fbbf24;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.section-icon {
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(to right, #86efac, #fbbf24);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: bold;
+}
+
+.report-section.parent-message .section-title {
+  color: #16a34a;
+}
+
+.report-section.observations .section-title {
+  color: #d97706;
+}
+
+.report-section.action-plan .section-title {
+  color: #16a34a;
+}
+
+.report-section.session-timeline .section-title {
+  color: #d97706;
+}
+
+.section-content {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+  background: #f0fdf4;
+  border-radius: 1rem;
+  padding: 0.75rem;
+}
+
+/* Observations */
+.observations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.observation-item {
+  background: #fef3c7;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  border-left: 2px solid #fbbf24;
+}
+
+.observation-title {
+  font-weight: 600;
+  color: #d97706;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.observation-description {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+/* Action Items */
+.action-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.action-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: #f0fdf4;
+  border-radius: 1rem;
+  padding: 0.75rem;
+}
+
+.action-number {
+  width: 1.5rem;
+  height: 1.5rem;
+  background: linear-gradient(to right, #4ade80, #fbbf24);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.action-text {
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.6;
+}
+
+/* Session Timeline */
+.sessions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-item {
+  position: relative;
+}
+
+.session-item > div:first-child {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.session-number {
+  width: 2rem;
+  height: 2rem;
+  background: linear-gradient(to right, #fbbf24, #86efac);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.session-content {
+  background: #fef3c7;
+  border-radius: 1rem;
+  padding: 0.75rem;
+  flex: 1;
+}
+
+.session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.session-title {
+  font-weight: 600;
+  color: #d97706;
+  font-size: 0.875rem;
+}
+
+.session-date {
+  font-size: 0.75rem;
+  color: #6b7280;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.session-comment {
+  font-size: 0.75rem;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.session-connector {
+  width: 2px;
+  height: 1rem;
+  background: linear-gradient(to bottom, #fbbf24, #86efac);
+  margin-left: 1rem;
+  margin-top: 0.25rem;
+}

@@ -1,0 +1,19 @@
+.bg-primary{
+    background-color: #18181B !important;
+}
+
+.bg-secondary{
+    background-color: #F4F4F5 !important;
+}
+
+.rounded-full {
+    border-radius: 9999px !important;
+}
+
+.border-transparent {
+    border-color: transparent !important;
+}
+
+.border {
+    border-width: 1px !important;
+}
