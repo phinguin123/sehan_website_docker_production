@@ -1,6 +1,6 @@
 import jwt
 import bcrypt
-from flask import request
+from flask import request, jsonify
 from flask_restx import Resource, Api, Namespace, fields
 from utils.db import DBHelper
 from flask_jwt_extended import (
@@ -9,6 +9,8 @@ from flask_jwt_extended import (
     get_jwt_identity,
     jwt_required,
     get_jwt,
+    set_access_cookies,
+    set_refresh_cookies,
 )
 
 
@@ -60,7 +62,15 @@ class TokenReissue(Resource):
         current_user_id = get_jwt_identity()
         jwt_token = get_jwt()
 
-        role = jwt_token["role"]
+        # 1. Use .get() to safely retrieve the role
+        role = jwt_token.get("role")
+
+        # 2. If role is missing, deny the request (Force Re-login)
+        if not role:
+            return {
+                "message": "Invalid token: missing role claim. Please log in again.",
+                "code": "INVALID_TOKEN_PAYLOAD"
+            }, 401
 
         additional_claims = {}
 
@@ -78,8 +88,14 @@ class TokenReissue(Resource):
                 return {"message": "Teacher Not Found"}, 404
 
             additional_claims["role"] = "teacher"
+        else:
+            # Handle unknown roles securely
+            return {
+                "message": "Unknown Role",
+                "code": "UNKNOWN_ROLE"
+            }, 401
 
-        # Create new access token
+        # Create new tokens using the same identity and role
         new_access_token = create_access_token(
             identity=current_user_id, additional_claims=additional_claims
         )
@@ -87,10 +103,18 @@ class TokenReissue(Resource):
             identity=current_user_id, additional_claims=additional_claims
         )
 
-        return {
-            "access_token": new_access_token,
-            "refresh_token": new_refresh_token,
-        }, 200
+        # Return tokens in cookies so the frontend can remain stateless
+        response = jsonify(
+            {
+                "msg": "Token refreshed",
+                "code": "TOKEN_REFRESHED",
+            }
+        )
+        set_access_cookies(response, new_access_token)
+        set_refresh_cookies(response, new_refresh_token)
+
+        # Return the prepared Flask Response directly (RestX will not re-serialize)
+        return response
 
 
 @Auth.route("/register")
@@ -132,10 +156,8 @@ class AuthLogin(Resource):
             return {"message": "invalid username"}, 404
 
         # default password is 2550
-        default_password = bcrypt.hashpw("2550".encode("utf-8"), bcrypt.gensalt())
-        if not bcrypt.checkpw(
-            password.encode("utf-8"), default_password
-        ):  # 비밀번호 일치 확인
+        # Use simple string comparison for default password
+        if password != "2550":
             return {"message": "Wrong password"}, 500
 
         additional_claims = {"role": "student"}
@@ -148,7 +170,15 @@ class AuthLogin(Resource):
             identity=student["id"], additional_claims=additional_claims
         )
 
-        return {"access_token": access_token, "refresh_token": refresh_token}, 200
+        # FIX: Create a response object and set cookies
+        response = jsonify({
+            "msg": "Login successful", 
+            "role": "student"
+        })
+        set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
+        
+        return response
 
 
 @Auth.route("/logout")

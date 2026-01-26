@@ -166,16 +166,21 @@ class StudentDAO:
         query = (
             "INSERT INTO students (name, school, grade, email) VALUES (%s, %s, %s, %s)"
         )
-        return self.db.execute(
-            query,
-            (
-                name,
-                school,
-                grade,
-                email,
-            ),
-            connection=connection,
-        )
+        if connection:
+            # Use execute_in_transaction when connection is provided (transaction mode)
+            return self.db.execute_in_transaction(
+                connection,
+                query,
+                (name, school, grade, email),
+                return_id=True,
+            )
+        else:
+            # Use execute when no connection provided (auto-commit mode)
+            return self.db.execute(
+                query,
+                (name, school, grade, email),
+                return_id=True,
+            )
 
     def edit_student(self, student_id, name, school, grade, email, connection=None):
         query = "UPDATE students SET name=%s, school=%s, grade=%s, email=%s WHERE student_id = %s"
@@ -245,6 +250,7 @@ class StudentDAO:
     def get_student_current_class(self, student_id, current_time, current_day_id):
         """Get current class. Attendance time is between (start time - 5) and endtime"""
         print(student_id, current_time, current_day_id)
+        # First, try the student's assigned class_id
         query = """
             SELECT 
                 t.timetable_id, -- timetable id is required to be sent by student for submitted attendance
@@ -274,8 +280,51 @@ class StudentDAO:
                 ))
             );
         """
-        return self.db.fetch_one(
+        result = self.db.fetch_one(
             query,
+            (student_id, current_day_id, current_time, current_time, current_time),
+        )
+
+        if result:
+            return result
+
+        # Fallback: if the student's class is SL or HL but the scheduled class is a combined SL/HL section,
+        # allow them to see the SL/HL timetable for the same subject/grade/mode.
+        fallback_query = """
+            SELECT 
+                t.timetable_id,
+                sub.subject_name,
+                l.level_name,
+                m.mode_name,
+                ts.start_time,
+                ts.end_time
+            FROM student_classes sc
+            JOIN classes c ON sc.class_id = c.class_id
+            JOIN classes c_slhl 
+                ON c_slhl.subject_id = c.subject_id
+                AND c_slhl.grade_id = c.grade_id
+                AND c_slhl.mode_id = c.mode_id
+                AND c_slhl.level_id = (SELECT id FROM levels WHERE level_name = 'SL/HL' LIMIT 1)
+            JOIN timetable t ON c_slhl.class_id = t.class_id
+            JOIN subjects sub ON c_slhl.subject_id = sub.subject_id
+            JOIN levels l ON c_slhl.level_id = l.id
+            JOIN modes m ON c_slhl.mode_id = m.id
+            JOIN time_slots ts ON t.time_slot_id = ts.time_slot_id
+            WHERE sc.student_id = %s
+            AND t.day_id = %s
+            AND (
+                (ts.end_time > ts.start_time AND %s BETWEEN DATE_SUB(ts.start_time, INTERVAL 5 MINUTE) AND ts.end_time)
+                OR
+                (ts.end_time < ts.start_time AND (
+                    %s >= DATE_SUB(ts.start_time, INTERVAL 5 MINUTE)
+                    OR
+                    %s <= ts.end_time
+                ))
+            );
+        """
+
+        return self.db.fetch_one(
+            fallback_query,
             (student_id, current_day_id, current_time, current_time, current_time),
         )
 

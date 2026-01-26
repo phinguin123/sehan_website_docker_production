@@ -4,7 +4,7 @@ class HomeworkDAO:
 
     def get_all_homework(self):
         query = """
-            SELECT h.*, h.id AS homework_id, h.createdDate as created_at, s.subject_name, l.level_name, g.grade as grade_name, COALESCE(file_name, '')
+            SELECT h.*, h.id AS homework_id, h.createdDate as created_at, s.subject_name, l.level_name, g.grade as grade_name, COALESCE(h.file_name, '') as file_name
             FROM homework AS h
             JOIN subjects AS s ON h.subject_id = s.subject_id
             JOIN levels AS l ON h.level_id = l.id

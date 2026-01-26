@@ -31,15 +31,22 @@ def test_kakao_alimtalk():
     # Test: Session Reminder Only
     print("1️⃣ Testing Session Reminder...")
     try:
-        send_pt_session_reminder(
+        result = send_pt_session_reminder(
             parent_phone_number=test_phone,
             session_date=session_date,
             session_time=session_time_str,
-            student_name=test_student
+            student_name=test_student,
+            subject_name="테스트 과목"
         )
-        print("   ✅ Session reminder sent successfully")
+        if result:
+            print("   ✅ Session reminder sent successfully")
+        else:
+            print("   ❌ Session reminder failed (returned False)")
+            print("   Check backend/logs/server.log for error details")
     except Exception as e:
-        print(f"   ❌ Session reminder failed: {e}")
+        print(f"   ❌ Session reminder failed with exception: {e}")
+        import traceback
+        traceback.print_exc()
     
     print()
     print("📋 Test Results:")

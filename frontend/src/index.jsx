@@ -1,15 +1,15 @@
 import * as React from "react";
 import ReactDOM from "react-dom/client";
-import "./index.css";
-import App from "./Pages/App";
+import "./styles/index.css";
+import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 
 // 1. import `ChakraProvider` component
 import { ColorModeScript, ChakraProvider } from "@chakra-ui/react";
-import theme from "./theme_test";
+import theme from "./theme";
 import { Provider } from "react-redux";
 import store from "./store";
-import "./scss/style.scss";
+import "./styles/scss/style.scss";
 
 /*
 const colors = {

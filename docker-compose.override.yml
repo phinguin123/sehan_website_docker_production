@@ -1,33 +1,77 @@
 # Development overrides
-# Usage: docker compose up -d
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
 
 services:
   backend:
+    env_file:
+      - env.local
     environment:
       FLASK_ENV: development
+      APP_MODE: development
+      TZ: Asia/Seoul
+      FLASK_DEBUG: 1
     ports:
-      - "5002:5002"
+      - "5000:5000"  # Expose backend for direct access during dev
     volumes:
-      - ./backend:/app
-    command: ["python3", "app.py", "5002"]
+      - ./backend:/app  # Mount for live code reloading
+    command: ["flask", "run", "--host=0.0.0.0", "--port=5000", "--reload"]  # Flask dev server with auto-reload
 
   frontend:
-    image: node:lts-alpine
-    working_dir: /app
-    command: sh -c "apk add --no-cache npm && npm ci --legacy-peer-deps && npm run dev -- --host 0.0.0.0 --port 3000"
-    ports:
-      - "3000:3000"
+    build:
+      context: ./frontend
+      target: dev  # 👈 Targets the stage BEFORE the build
     volumes:
       - ./frontend:/app
+      - /app/node_modules # Important: Keeps the container's node_modules, ignores your local ones
+    ports:
+      - "3000:3000"
+    # Command is optional now because "AS dev" has the right CMD,
+    # but keeping it here is safe to ensure host binding.
+    command: ["npm", "run", "dev", "--", "--host"]
 
   nginx:
     ports:
       - "80:80"
+      - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/sites-enabled/docker-dev.conf:/etc/nginx/sites-enabled/default:ro
       - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf:ro
 
-  db:
+  redis:
     ports:
-      - "3306:3306"
+      - "6379:6379"  # Expose Redis for debugging tools during dev
+
+  celery-worker:
+    env_file:
+      - env.local
+    environment:
+      FLASK_ENV: development
+      APP_MODE: development
+      TZ: Asia/Seoul
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+
+  celery-beat:
+    env_file:
+      - env.local
+    environment:
+      FLASK_ENV: development
+      APP_MODE: development
+      TZ: Asia/Seoul
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+
+  flower:
+    env_file:
+      - env.local
+    environment:
+      FLASK_ENV: development
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "5555:5555"  # Keep Flower accessible for monitoring

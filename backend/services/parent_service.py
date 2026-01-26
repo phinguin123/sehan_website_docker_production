@@ -1,3 +1,4 @@
+from typing import List, Dict, Any
 from dao.parent_dao import ParentDAO
 from dao.student_dao import StudentDAO
 from utils.db import DBHelper
@@ -6,14 +7,12 @@ db_helper = DBHelper()
 
 
 class DuplicateEmailError(Exception):
-    """Custom exception for duplicate parent entries."""
-
+    """"Raised when a resource already exists (e.g. duplicate email)."""
     pass
 
 
 class NoDeleteParent(Exception):
-    """If there is a match in parent student, do not delete parent"""
-
+    """Raised when an entity cannot be deleted due to existing dependencies."""
     pass
 
 
@@ -22,10 +21,20 @@ class ParentService:
         self.parent_dao = ParentDAO(db_helper)
         self.student_dao = StudentDAO(db_helper)
 
+    def get_parents(self):
+        """
+        Retrieves a list of all parents. 
+        """
+        return self.parent_dao.get_all_parents()
+
     def _check_duplicate_email(self, email, parent_id=None):
         # check for duplicate parent email
         existing_parent = self.parent_dao.get_parent_by_email(email)
-        if existing_parent and existing_parent["parent_id"] != parent_id:
+        # Convert both to int for proper comparison (handle None and string cases)
+        existing_parent_id = int(existing_parent["parent_id"]) if existing_parent else None
+        provided_parent_id = int(parent_id) if parent_id is not None else None
+        
+        if existing_parent and existing_parent_id != provided_parent_id:
             raise DuplicateEmailError("A parent with this email already exists.")
 
         # check if the email belongs to an existing student

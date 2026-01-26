@@ -1,0 +1,20 @@
+import React from 'react'
+import AdminContent from '@/components/layout/AdminContent'
+import AdminSidebar from '@/components/layout/AdminSidebar'
+import AdminHeader from '@/components/layout/AdminHeader'
+
+const AdminLayout = () => {
+  return (
+    <div>
+      <AdminSidebar />
+      <div className="wrapper d-flex flex-column min-vh-100">
+        <AdminHeader />
+        <div className="body flex-grow-1">
+          <AdminContent />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default AdminLayout

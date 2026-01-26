@@ -1,19 +1,31 @@
-FROM node:lts-alpine AS builder
-
-# Ensure npm is available
-RUN apk add --no-cache npm
-
+# --- Stage 1: Base (Dependencies) ---
+# This stage installs node_modules. It is common for BOTH dev and prod.
+FROM node:20-alpine AS base
 WORKDIR /app
-
 COPY package*.json ./
+# We use 'ci' instead of 'install' for exact version matching, but 'install' is fine too
+RUN npm install
 
-RUN npm ci --legacy-peer-deps # legacy because of liquid glass package
+# --- Stage 2: Development (The "Target" for local dev) ---
+# We stop here for docker-compose.override.yml
+# We don't copy source code here because we will bind-mount it dynamically!
+FROM base AS dev
+# Force exposure of the dev port
+EXPOSE 3000
+# Default command for dev (can be overridden by compose)
+CMD ["npm", "run", "dev", "--", "--host"]
 
+# --- Stage 3: Builder (Compiling for Prod) ---
+FROM base AS builder
+# Now we copy the source code because we need to freeze it for production
 COPY . .
-
+# Now we run the heavy build command
 RUN npm run build
 
-FROM nginx:alpine
+# --- Stage 4: Production (Serving) ---
+FROM nginx:alpine AS prod
+# Copy ONLY the static files from the Builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

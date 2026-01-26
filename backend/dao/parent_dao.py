@@ -1,3 +1,5 @@
+from typing import List, Dict, Any
+
 class ParentDAO:
     def __init__(self, db_helper):
         self.db = db_helper
@@ -42,10 +44,18 @@ class ParentDAO:
 
     def get_parents(self):
         query = """
-        Select id as parent_id, parent_name from parents
+        Select parent_id, parent_name from parents
         """
 
         return self.db.fetch_all(query)
+
+    def get_all_parents(self):
+        query = """
+            SELECT parent_id, parent_name, email, phone_number as phone 
+            FROM parents 
+            ORDER BY parent_name DESC
+        """
+        return list(self.db.fetch_all(query))
 
     def check_parent_student_match(self, parent_id):
         query = """

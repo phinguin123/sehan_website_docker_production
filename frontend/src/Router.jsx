@@ -2,43 +2,57 @@ import { Routes, Route, useLocation, Navigate, Outlet } from "react-router-dom";
 import React, { lazy, Suspense } from "react";
 
 // Small, always-present components (keep as normal imports)
-import NavigationBar from "./components/NavigationBar";
-import SimpleSidebar from "./components/SideBar";
-import PrivateRoutes from "./components/PrivateRoutes";
-import ParentPrivateRoutes from "./components/ParentPrivateRoutes";
-import PrivateTutoringPrivateRoutes from "./components/PrivateTutoringPrivateRoutes";
-import RandomNumberGenerator from "./components/RandomNumberGenerator";
-import ZoomRedirection from "./components/ZoomRedirection";
-import Logout from "./components/Logout";
+import NavigationBar from "./components/layout/NavigationBar";
+import SimpleSidebar from "./components/layout/SideBar";
+import PrivateRoutes from "./components/routes/PrivateRoutes";
+import AdminPrivateRoutes from "./components/routes/AdminPrivateRoutes";
+import ParentPrivateRoutes from "./components/routes/ParentPrivateRoutes";
+import RandomNumberGenerator from "./components/common/RandomNumberGenerator";
+import ZoomRedirection from "./components/routes/ZoomRedirection";
+import Logout from "./components/routes/Logout";
 
 // LAZY IMPORTS for heavy/page components
-const Homepage = lazy(() => import("./Pages/Homepage"));
-const LoginPage = lazy(() => import("./Pages/LoginPage"));
-const StudentGradesPage = lazy(() => import("./Pages/StudentGradesPage"));
-const AttendancePage = lazy(() => import("./Pages/AttendancePage"));
-const HomeworkPage = lazy(() => import("./Pages/HomeworkPage"));
-const SetupNamePage = lazy(() => import("./Pages/SetupNamePage"));
-const AdminLayout = lazy(() => import("./layout/AdminLayout"));
-const AdminLoginPage = lazy(() => import("./Pages/AdminLoginPage"));
-const ParentDashboardPage = lazy(() => import("./Pages/ParentDashboardPage"));
-const ParentLoginPage = lazy(() => import("./Pages/ParentLoginPage"));
-const ParentSelectChildPage = lazy(() => import("./Pages/ParentSelectChildPage"));
-const ParentReportPage = lazy(() => import("./Pages/ParentReportPage"));
-const Redirection = lazy(() => import("@/components/Redirection"));
+// Student Pages
+const Homepage = lazy(() => import("./pages/student/Homepage"));
+const StudentGradesPage = lazy(() => import("./pages/student/StudentGradesPage"));
+const AttendancePage = lazy(() => import("./pages/student/AttendancePage"));
+const HomeworkPage = lazy(() => import("./pages/student/HomeworkPage"));
+const SetupNamePage = lazy(() => import("./pages/student/SetupNamePage"));
 
-// Private Tutoring Components
-const PrivateTutoringLayout = lazy(() => import("./layout/PrivateTutoringLayout"));
-const PTLoginPage = lazy(() => import("./pages/private-tutoring/LoginPage"));
-const PTDashboard = lazy(() => import("./pages/private-tutoring/Dashboard"));
-const PTStudentManager = lazy(() => import("./pages/private-tutoring/StudentManager"));
-const PTTeacherManager = lazy(() => import("./pages/private-tutoring/TeacherManager"));
-const PTSessionManager = lazy(() => import("./pages/private-tutoring/SessionManager"));
-// const PTScheduleManager = lazy(() => import("./pages/private-tutoring/ScheduleManager"));
-const PTReports = lazy(() => import("./pages/private-tutoring/Reports"));
-const PTExampleReport = lazy(() => import("./pages/private-tutoring/ExampleReport"));
-const PTCompleteSession = lazy(() => import("./pages/private-tutoring/CompleteSession"));
-const PTSessions = lazy(() => import("./pages/private-tutoring/Sessions"));
-const AboutPhinguin = lazy(() => import("./pages/2025/winter/about"));
+// Public Pages
+const LoginPage = lazy(() => import("./pages/public/LoginPage"));
+const SecretPage_v02 = lazy(() => import("./pages/public/SecretPage_v02"));
+
+// Layouts
+const ShadcnLayout = lazy(() => import("./components/layout/ShadcnLayout"));
+
+// Admin Pages
+const AdminLoginPage = lazy(() => import("./pages/admin/AdminLoginPage"));
+const AdminDashboardPage = lazy(() => import("./pages/admin/AdminDashboardPage"));
+const AdminHomeworkCreatePage = lazy(() => import("./pages/admin/AdminHomeworkCreatePage"));
+const AdminHomeworkGradePage = lazy(() => import("./pages/admin/AdminHomeworkGradePage"));
+const AdminAttendancePage = lazy(() => import("./pages/admin/AdminAttendancePage"));
+const AdminAttendanceCodePage = lazy(() => import("./pages/admin/AdminAttendanceCodePage"));
+const AdminTimetableSettingsPage = lazy(() => import("./pages/admin/AdminTimetableSettingsPage"));
+const AdminStudentSettingsPage = lazy(() => import("./pages/admin/AdminStudentSettingsPage"));
+const AdminTeacherSettingsPage = lazy(() => import("./pages/admin/AdminTeacherSettingsPage"));
+const AdminParentSettingsPage = lazy(() => import("./pages/admin/AdminParentSettingsPage"));
+const AdminParentStudentPage = lazy(() => import("./pages/admin/AdminParentStudentPage"));
+const AdminStudentManualSettingsPage = lazy(() => import("./pages/admin/AdminStudentManualSettingsPage"));
+const AdminStudentCommentsPage = lazy(() => import("./pages/admin/AdminStudentCommentsPage"));
+const AdminReportGenerate = lazy(() => import("./pages/admin/AdminReportGenerate"));
+const StudentScoresTable = lazy(() => import("./pages/admin/StudentScoresTable"));
+const AdminSettingPage = lazy(() => import("./pages/admin/AdminSettingPage"));
+
+// Parent Pages
+const ParentDashboardPage = lazy(() => import("./pages/parent/ParentDashboardPage"));
+const ParentLoginPage = lazy(() => import("./pages/parent/ParentLoginPage"));
+const ParentSelectChildPage = lazy(() => import("./pages/parent/ParentSelectChildPage"));
+const ParentReportPage = lazy(() => import("./pages/parent/ParentReportPage"));
+
+// Marketing & Other
+const Redirection = lazy(() => import("@/components/routes/Redirection"));
+const AboutPhinguin = lazy(() => import("./pages/marketing/2025/winter/about"));
 
 import styled from "styled-components";
 
@@ -54,7 +68,6 @@ const noBarsRoutes = [
   "/oauth/zoom",
   "/set-name",
   "/secure-sehan-admin",
-  "/private-tutoring",
 ];
 
 function MainLayout({ children }) {
@@ -77,7 +90,6 @@ const Router = () => {
   const showNavBar =
     !noBarsRoutes.includes(location.pathname) &&
     !location.pathname.startsWith("/secure-sehan-admin") &&
-    !location.pathname.startsWith("/private-tutoring") &&
     !location.pathname.startsWith("/parent") &&
     !location.pathname.startsWith("/2025");
 
@@ -85,6 +97,8 @@ const Router = () => {
     <>
       {showNavBar && <NavigationBar />}
       <Routes>
+
+        {/* PUBLIC ADMIN ROUTE (Login) */}
         <Route
           path="/secure-sehan-admin/login"
           element={
@@ -93,17 +107,142 @@ const Router = () => {
             </SuspenseWrapper>
           }
         />
-        {/* Admin routes */}
+
+
+        {/* PROTECTED ADMIN ROUTES */}
+        {/* Step 1: Wrap everything in the Layout */}
         <Route
           path="/secure-sehan-admin/*"
           element={
             <SuspenseWrapper>
-              <AdminLayout />
+              <ShadcnLayout />
             </SuspenseWrapper>
           }
         >
-
-          {/* Add more admin routes here, lazy as needed */}
+          {/* Step 2: Wrap the protected children in the Guard */}
+          <Route element={<AdminPrivateRoutes />}>
+            <Route
+              path="dashboard"
+              element={
+                <SuspenseWrapper>
+                  <AdminDashboardPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="homework/create"
+              element={
+                <SuspenseWrapper>
+                  <AdminHomeworkCreatePage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="homework/grade"
+              element={
+                <SuspenseWrapper>
+                  <AdminHomeworkGradePage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="attendance/info"
+              element={
+                <SuspenseWrapper>
+                  <AdminAttendancePage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="attendance/code"
+              element={
+                <SuspenseWrapper>
+                  <AdminAttendanceCodePage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="scores"
+              element={
+                <SuspenseWrapper>
+                  <StudentScoresTable />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="settings/timetable"
+              element={
+                <SuspenseWrapper>
+                  <AdminTimetableSettingsPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="settings/students"
+              element={
+                <SuspenseWrapper>
+                  <AdminStudentSettingsPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="settings/teachers"
+              element={
+                <SuspenseWrapper>
+                  <AdminTeacherSettingsPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="settings/parents"
+              element={
+                <SuspenseWrapper>
+                  <AdminParentSettingsPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="settings/parent-student"
+              element={
+                <SuspenseWrapper>
+                  <AdminParentStudentPage />
+                </SuspenseWrapper>
+              }
+            />
+            {/* <Route
+              path="settings/manual-student"
+              element={
+                <SuspenseWrapper>
+                  <AdminStudentManualSettingsPage />
+                </SuspenseWrapper>
+              }
+            /> */}
+            <Route
+              path="settings/config"
+              element={
+                <SuspenseWrapper>
+                  <AdminSettingPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="report/comments"
+              element={
+                <SuspenseWrapper>
+                  <AdminStudentCommentsPage />
+                </SuspenseWrapper>
+              }
+            />
+            <Route
+              path="report/management"
+              element={
+                <SuspenseWrapper>
+                  <AdminReportGenerate />
+                </SuspenseWrapper>
+              }
+            />
+            <Route index element={<Navigate to="dashboard" replace />} />
+          </Route>
         </Route>
 
         {/* About Phinguin */}
@@ -115,43 +254,6 @@ const Router = () => {
             </SuspenseWrapper>
           } 
         />
-
-        {/* Private Tutoring Login */}
-        <Route
-          path="/private-tutoring/login"
-          element={
-            <SuspenseWrapper>
-              <PTLoginPage />
-            </SuspenseWrapper>
-          }
-        />
-
-        {/* Private Tutoring routes */}
-        <Route path="/private-tutoring/*" element={<Outlet />}>
-          <Route element={<PrivateTutoringPrivateRoutes />}>
-            <Route
-              path="*"
-              element={
-                <SuspenseWrapper>
-                  <PrivateTutoringLayout />
-                </SuspenseWrapper>
-              }
-            >
-              <Route path="dashboard" element={<SuspenseWrapper><PTDashboard /></SuspenseWrapper>} />
-              <Route path="students" element={<SuspenseWrapper><PTStudentManager /></SuspenseWrapper>} />
-              <Route path="teachers" element={<SuspenseWrapper><PTTeacherManager /></SuspenseWrapper>} />
-              {/* Sessions list/history */}
-              <Route path="sessions" element={<SuspenseWrapper><PTSessions /></SuspenseWrapper>} />
-              {/* Session Manager (builder) */}
-              <Route path="session-manager" element={<SuspenseWrapper><PTSessionManager /></SuspenseWrapper>} />
-              {/* Schedule tab removed - sessions managed via Session Manager */}
-              <Route path="complete-session" element={<SuspenseWrapper><PTCompleteSession /></SuspenseWrapper>} />
-              <Route path="reports" element={<SuspenseWrapper><PTReports /></SuspenseWrapper>} />
-              <Route path="example-report" element={<SuspenseWrapper><PTExampleReport /></SuspenseWrapper>} />
-              <Route index element={<Navigate to="dashboard" replace />} />
-            </Route>
-          </Route>
-        </Route>
 
         {/* Parent routes */}
         <Route path="/parent/*" element={<Outlet />}>
@@ -231,6 +333,14 @@ const Router = () => {
                       </SuspenseWrapper>
                     }
                   />
+                  <Route
+                    path="/happy-new-year"
+                    element={
+                      <SuspenseWrapper>
+                        <SecretPage_v02 />
+                      </SuspenseWrapper>
+                    }
+                  />
                 </Route>
                 {/* Public routes */}
                 <Route
@@ -241,7 +351,14 @@ const Router = () => {
                     </SuspenseWrapper>
                   }
                 />
-                <Route path="/oauth/zoom" element={<ZoomRedirection />} />
+                <Route 
+                  path="/oauth/zoom" 
+                  element={
+                    <SuspenseWrapper>
+                      <ZoomRedirection />
+                    </SuspenseWrapper>
+                  } 
+                />
                 <Route
                   path="/login"
                   element={
@@ -250,7 +367,14 @@ const Router = () => {
                     </SuspenseWrapper>
                   }
                 />
-                <Route path="/logout" element={<Logout />} />
+                <Route 
+                  path="/logout" 
+                  element={
+                    <SuspenseWrapper>
+                      <Logout />
+                    </SuspenseWrapper>
+                  } 
+                />
                 <Route
                   path="/set-name"
                   element={

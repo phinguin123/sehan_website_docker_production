@@ -44,12 +44,26 @@ class ReportService:
             self.get_report_attendance()
         )  # For now, returning the same data as reference data
 
-    def generate_student_reports(self):
+    def generate_student_reports(self, output_path=None):
+        """
+        Generate student reports.
+        
+        Args:
+            output_path: Optional path to save ZIP file (for async tasks).
+                        If None, returns Response for synchronous use.
+        
+        Returns:
+            Response object or dict with file info depending on output_path.
+        """
         print("generating report...")
-        return self.report_dao.generate_student_reports()
+        return self.report_dao.generate_student_reports(output_path=output_path)
 
     def generate_one_student_reports(self, student_id):
         return self.report_dao.generate_pdf(student_id)
+
+    def generate_one_student_reports_weekly(self, student_id, num_weeks=6):
+        """Generate a week-based report for a student."""
+        return self.report_dao.generate_pdf_weekly(student_id, num_weeks)
 
     def send_reports(self):
         return self.report_dao.send_reports()
@@ -57,8 +71,8 @@ class ReportService:
     def check_availability(self):
         current_day_id = get_current_day_id()
 
-        report_available_day_ids = [3, 4, 5]  # wed, thur, fri
+        report_available_day_ids = [2, 3, 4, 5]  # tue,wed, thur, fri
 
         # TODO delete after 2025 summer
         if current_day_id not in report_available_day_ids:
-            raise ReportNotAvailable("Please check report on Wed, Thur or Fri")
+            raise ReportNotAvailable("Please check report on Tue, Wed, Thur or Fri")

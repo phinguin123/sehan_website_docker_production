@@ -20,17 +20,17 @@
 #
 server {
 	listen 80;
-    	server_name dev.sehanib.kr;
+    	server_name dev.sehanibp.kr;
     	return 301 https://$host$request_uri;  # Redirect HTTP to HTTPS
 }
 
 server {
 	listen 443 ssl;
-	server_name sehanib.kr www.sehanib.kr;
+	server_name sehanibp.kr www.sehanibp.kr;
 
 	# ssl certificate path
-	ssl_certificate /etc/ssl/sehanib.kr/www_sehanib.kr_combined.crt;
-	ssl_certificate_key /etc/ssl/sehanib.kr/www_sehanib.kr.key;
+	ssl_certificate /etc/ssl/sehanibp.kr/www_sehanibp.kr_combined.crt;
+	ssl_certificate_key /etc/ssl/sehanibp.kr/www_sehanibp.kr.key;
 
 	root /home/ubuntu/sehan_website/dist;
 
@@ -64,14 +64,14 @@ server {
 
 server {
 	listen 443 ssl;
-	server_name dev.sehanib.kr;
+	server_name dev.sehanibp.kr;
 
-	ssl_certificate /etc/letsencrypt/live/dev.sehanib.kr/fullchain.pem;
-	ssl_certificate_key /etc/letsencrypt/live/dev.sehanib.kr/privkey.pem;
+	ssl_certificate /etc/letsencrypt/live/dev.sehanibp.kr/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/dev.sehanibp.kr/privkey.pem;
 
 	# ssl certificate path
-	#ssl_certificate /etc/ssl/sehanib.kr/www_sehanib.kr_combined.crt;
-	#ssl_certificate_key /etc/ssl/sehanib.kr/www_sehanib.kr.key;
+	#ssl_certificate /etc/ssl/sehanibp.kr/www_sehanibp.kr_combined.crt;
+	#ssl_certificate_key /etc/ssl/sehanibp.kr/www_sehanibp.kr.key;
 
 	#root /home/ubuntu/sehan_website;
 

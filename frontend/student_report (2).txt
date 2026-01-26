@@ -1,0 +1,5 @@
+{
+    "message": "Report generation started. Please check status using the task_id.",
+    "task_id": "5fa3fdf1-473d-401c-afc2-fa06e6955ef1",
+    "status_url": "/api/reports/students/status/5fa3fdf1-473d-401c-afc2-fa06e6955ef1"
+}

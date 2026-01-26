@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => {
 	    // --- ADD THIS PROXY CONFIGURATION ---
       proxy: {
         '/api': { // This will proxy any requests that start with /api
-          target: 'http://flask_backend:5002', // The address of your Flask backend
+          target: 'http://localhost:5000', // The address of your Flask backend (localhost for dev, flask_backend:5002 for Docker)
           changeOrigin: true, // Needed for virtual hosted sites
           // Optional: If your Flask backend doesn't expect the /api prefix,
           // you can rewrite the path:

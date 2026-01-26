@@ -71,4 +71,13 @@ env.local
 
 /frontend/node_modules
 
-/certbot
+/certbot    
+
+# Ignore all .md files
+*.md
+
+# But do not ignore README.md
+!README.md
+
+*.zip
+*.pdf

@@ -59,6 +59,151 @@ timetable_response_model = timetable_ns.model(
 db_helper = DBHelper()
 
 
+@timetable_ns.route("/all")
+class AllTimetables(Resource):
+    def get(self):
+        """Get all timetables for all grades"""
+        try:
+            # Fetch time slots
+            query1 = "SELECT time_slot_id, start_time, end_time, grade_id FROM time_slots ORDER BY grade_id, time_slot_id"
+            time_slots = db_helper.fetch_all(query1)
+
+            time_slots_per_grades = {}
+            for ts in time_slots:
+                time_slot_id = ts["time_slot_id"]
+                start_time = timedelta_to_string(ts["start_time"])
+                end_time = timedelta_to_string(ts["end_time"])
+                grade_id = str(ts["grade_id"])
+
+                time_slot = {
+                    "time_slot_id": time_slot_id,
+                    "start_time": start_time,
+                    "end_time": end_time,
+                }
+
+                if grade_id not in time_slots_per_grades:
+                    time_slots_per_grades[grade_id] = []
+                time_slots_per_grades[grade_id].append(time_slot)
+
+            # Fetch timetable data
+            query2 = """
+                SELECT t.timetable_id, d.day_name, t.time_slot_id, s.subject_name, c.level_id, tea.id, g.grade_id
+                FROM timetable t
+                JOIN classes c ON t.class_id = c.class_id
+                JOIN subjects s ON c.subject_id = s.subject_id
+                JOIN days d ON t.day_id = d.day_id
+                JOIN grades g ON c.grade_id = g.grade_id
+                JOIN teachers tea ON t.teacher_id = tea.id
+                ORDER BY g.grade_id, d.day_id, t.time_slot_id
+            """
+            timetables_data = db_helper.fetch_all(query2)
+
+            timetables_per_grades = {}
+            for row in timetables_data:
+                grade_id = str(row["grade_id"])
+                timetable_id = row["timetable_id"]
+                day_name = row["day_name"]
+                time_slot_id = str(row["time_slot_id"])
+                subject_name = row["subject_name"]
+                level = row["level_id"]
+                teacher_id = row["id"]
+
+                if grade_id not in timetables_per_grades:
+                    timetables_per_grades[grade_id] = {}
+                if day_name not in timetables_per_grades[grade_id]:
+                    timetables_per_grades[grade_id][day_name] = {}
+                if time_slot_id not in timetables_per_grades[grade_id][day_name]:
+                    timetables_per_grades[grade_id][day_name][time_slot_id] = {}
+
+                timetables_per_grades[grade_id][day_name][time_slot_id][timetable_id] = {
+                    "subject_name": subject_name,
+                    "level": level,
+                    "teacher_id": teacher_id,
+                }
+
+            # Build response for all grades
+            timetables_with_grades = {}
+            for grade in range(1, 4):
+                grade_str = str(grade)
+                if grade_str in timetables_per_grades:
+                    timetables_with_grades[grade_str] = {
+                        "timeSlots": time_slots_per_grades.get(grade_str, []),
+                        "timetables": timetables_per_grades[grade_str],
+                    }
+                else:
+                    timetables_with_grades[grade_str] = {
+                        "timeSlots": [],
+                        "timetables": {},
+                    }
+            
+            return timetables_with_grades, 200
+        except Exception as e:
+            abort(500, f"Error fetching timetables: {str(e)}")
+
+    def post(self):
+        """Save timetables"""
+        from flask_jwt_extended import jwt_required
+        
+        # Signal scheduler to reschedule
+        import os
+        if os.environ.get("APP_MODE") == "production":
+            # Set flag for scheduler to reschedule
+            # This would need to be implemented in scheduler service
+            pass
+
+        data = request.json
+        grade_id = data.get("activeGrade")
+
+        try:
+            conn = db_helper.get_connection()
+            
+            with conn.cursor() as cursor:
+                # Delete existing timetables for this grade
+                cursor.execute("DELETE FROM timetable WHERE grade_id = %s", (grade_id,))
+
+                # Insert new timetables
+                timetables = data.get("timetables", {})
+                for day_name, time_slots in timetables.items():
+                    # Get day_id
+                    cursor.execute("SELECT day_id FROM days WHERE day_name = %s", (day_name,))
+                    day_row = cursor.fetchone()
+                    if not day_row:
+                        continue
+                    day_id = day_row["day_id"]
+
+                    for time_slot_id, subjects in time_slots.items():
+                        for subject_info in subjects.values():
+                            subject_name = subject_info.get("subject_name")
+                            level = subject_info.get("level")
+                            teacher_id = subject_info.get("teacher_id")
+
+                            # Get subject_id
+                            cursor.execute(
+                                "SELECT subject_id FROM subjects WHERE subject_name = %s",
+                                (subject_name,)
+                            )
+                            subject_row = cursor.fetchone()
+                            if not subject_row:
+                                continue
+                            subject_id = subject_row["subject_id"]
+
+                            # Insert timetable entry
+                            cursor.execute(
+                                """
+                                INSERT INTO timetable (day_id, time_slot_id, subject_id, level, teacher_id, grade_id)
+                                VALUES (%s, %s, %s, %s, %s, %s)
+                                """,
+                                (day_id, time_slot_id, subject_id, level, teacher_id, grade_id)
+                            )
+
+                conn.commit()
+            conn.close()
+            
+            return {"message": "Timetables saved successfully"}, 200
+        except Exception as e:
+            abort(500, f"Error saving timetables: {str(e)}")
+
+
 @timetable_ns.route("/")
 class Timetable(Resource):
 

@@ -84,3 +84,23 @@ class StudentSubject(Resource):
         student_subjects = subject_dao.get_student_subjects(student_id)
 
         return student_subjects
+
+
+@subjects_ns.route("/grade/<int:grade_id>")
+class GradeSubjects(Resource):
+    @subjects_ns.marshal_list_with(subject_names_model)
+    def get(self, grade_id):
+        """Get list of subjects for a specific grade"""
+        try:
+            query = """
+                SELECT DISTINCT s.subject_id, s.subject_name
+                FROM subjects s
+                JOIN classes c ON s.subject_id = c.subject_id
+                WHERE c.grade_id = %s
+                ORDER BY s.subject_name
+            """
+            subjects = db_helper.fetch_all(query, (grade_id,))
+            return subjects, 200
+        except Exception as e:
+            from flask_restx import abort
+            abort(500, f"Error fetching grade subjects: {str(e)}")

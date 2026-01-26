@@ -85,3 +85,76 @@ class DailyAttendance(Resource):
             abort(400, str(e))
         except Exception as e:
             abort(500, f"Error fetching attendance data: {str(e)}")
+
+
+@attendance_ns.route("/code")
+class AttendanceCode(Resource):
+    def get(self):
+        """Get the current attendance code"""
+        try:
+            query = "SELECT code FROM attendance_code WHERE id = 1"
+            result = db_helper.fetch_one(query)
+            
+            if result:
+                return {"attendanceCode": result["code"]}, 200
+            else:
+                return {"attendanceCode": None}, 200
+        except Exception as e:
+            abort(500, f"Error fetching attendance code: {str(e)}")
+
+
+@attendance_ns.route("/info")
+class AttendanceInfo(Resource):
+    def get(self):
+        """Get attendance statistics (count by status)"""
+        try:
+            query = """
+                SELECT 
+                    status, 
+                    COUNT(*) AS count
+                FROM (
+                    SELECT 
+                        a.student_id, 
+                        a.subject_name, 
+                        a.attendance_date, 
+                        a.status
+                    FROM attendance a
+                    INNER JOIN (
+                        SELECT 
+                            student_id, 
+                            subject_name, 
+                            attendance_date, 
+                            MAX(created_at) AS latest_created_at
+                        FROM attendance
+                        GROUP BY student_id, subject_name, attendance_date
+                    ) latest_attendance 
+                    ON a.student_id = latest_attendance.student_id
+                    AND a.subject_name = latest_attendance.subject_name
+                    AND a.attendance_date = latest_attendance.attendance_date
+                    AND a.created_at = latest_attendance.latest_created_at
+                ) latest_statuses
+                GROUP BY status
+                ORDER BY status
+            """
+            result = db_helper.fetch_all(query)
+            return result, 200
+        except Exception as e:
+            abort(500, f"Error fetching attendance info: {str(e)}")
+
+
+@attendance_ns.route("/")
+class AttendanceList(Resource):
+    @attendance_ns.doc(params={"attendance_date": "Date in YYYY-MM-DD format"})
+    def get(self):
+        """Get all attendance records for a specific date"""
+        attendance_date = request.args.get("attendance_date")
+        
+        if not attendance_date:
+            abort(400, "attendance_date is required")
+        
+        try:
+            query = "SELECT * FROM attendance WHERE attendance_date = %s"
+            data = db_helper.fetch_all(query, (attendance_date,))
+            return data, 200
+        except Exception as e:
+            abort(500, f"Error fetching attendance: {str(e)}")

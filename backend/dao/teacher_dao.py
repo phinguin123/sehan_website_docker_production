@@ -36,35 +36,67 @@ class TeacherDAO:
         INSERT INTO teachers (name, zoom_user_id, username, password, teacher_type)
         VALUES (%s, %s, %s, %s, %s)
         """
-        return self.db.execute(
-            query,
-            (
-                teacher_data.get("teacher_name"),
-                teacher_data.get("zoom_user_id"),
-                teacher_data.get("username"),
-                teacher_data.get("password"),
-                teacher_data.get("teacher_type"),
-            ),
-            connection=connection,
-        )
+        if connection:
+            # Use execute_in_transaction when connection is provided (transaction mode)
+            return self.db.execute_in_transaction(
+                connection,
+                query,
+                (
+                    teacher_data.get("teacher_name"),
+                    teacher_data.get("zoom_user_id"),
+                    teacher_data.get("username"),
+                    teacher_data.get("password"),
+                    teacher_data.get("teacher_type"),
+                ),
+                return_id=True,
+            )
+        else:
+            # Use execute when no connection provided (auto-commit mode)
+            return self.db.execute(
+                query,
+                (
+                    teacher_data.get("teacher_name"),
+                    teacher_data.get("zoom_user_id"),
+                    teacher_data.get("username"),
+                    teacher_data.get("password"),
+                    teacher_data.get("teacher_type"),
+                ),
+                return_id=True,
+            )
 
     def edit_teacher(self, teacher_data, connection=None):
         query = """
         UPDATE teachers
-        SET name = %s, zoom_user_id = %s, username = %s, password = %s
+        SET name = %s, zoom_user_id = %s, username = %s, password = %s, teacher_type = %s
         WHERE id = %s
         """
-        return self.db.execute(
-            query,
-            (
-                teacher_data.get("teacher_name"),
-                teacher_data.get("zoom_user_id"),
-                teacher_data.get("username"),
-                teacher_data.get("password"),
-                teacher_data.get("teacher_id"),
-            ),
-            connection=connection,
-        )
+        if connection:
+            # Use execute_in_transaction when connection is provided (transaction mode)
+            return self.db.execute_in_transaction(
+                connection,
+                query,
+                (
+                    teacher_data.get("teacher_name"),
+                    teacher_data.get("zoom_user_id"),
+                    teacher_data.get("username"),
+                    teacher_data.get("password"),
+                    teacher_data.get("teacher_type"),
+                    teacher_data.get("teacher_id"),
+                ),
+            )
+        else:
+            # Use execute when no connection provided (auto-commit mode)
+            return self.db.execute(
+                query,
+                (
+                    teacher_data.get("teacher_name"),
+                    teacher_data.get("zoom_user_id"),
+                    teacher_data.get("username"),
+                    teacher_data.get("password"),
+                    teacher_data.get("teacher_type"),
+                    teacher_data.get("teacher_id"),
+                ),
+            )
 
     def delete_teacher(self, teacher_id):
         query = """
@@ -77,20 +109,40 @@ class TeacherDAO:
         INSERT INTO teachers_subjects (teacher_id, subject_id)
         VALUES (%s, %s)
         """
-        return self.db.execute(
-            query,
-            (
-                teacher_id,
-                subject_id,
-            ),
-            connection=connection,
-        )
+        if connection:
+            # Use execute_in_transaction when connection is provided (transaction mode)
+            return self.db.execute_in_transaction(
+                connection,
+                query,
+                (
+                    teacher_id,
+                    subject_id,
+                ),
+            )
+        else:
+            # Use execute when no connection provided (auto-commit mode)
+            return self.db.execute(
+                query,
+                (
+                    teacher_id,
+                    subject_id,
+                ),
+            )
 
     def delete_teachers_subjects_info(self, teacher_id, connection=None):
         query = """
         DELETE FROM teachers_subjects WHERE teacher_id = %s
         """
-        return self.db.execute(query, (teacher_id,), connection=connection)
+        if connection:
+            # Use execute_in_transaction when connection is provided (transaction mode)
+            return self.db.execute_in_transaction(
+                connection,
+                query,
+                (teacher_id,),
+            )
+        else:
+            # Use execute when no connection provided (auto-commit mode)
+            return self.db.execute(query, (teacher_id,))
     
     def check_teacher_id(self, teacher_id):
         query = """

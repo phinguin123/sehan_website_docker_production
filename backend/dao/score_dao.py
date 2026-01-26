@@ -11,7 +11,6 @@ class ScoreDAO:
                SELECT distinct s.student_id, s.name, sub.subject_id, sub.subject_name, hw.assignedDate, shs.raw_marks, shs.id as submission_id -- raw marks is percentage
         FROM students s
         JOIN student_classes sc ON s.student_id = sc.student_id
-        JOIN timetable t ON sc.class_id = t.class_id
         JOIN classes c ON sc.class_id = c.class_id
         JOIN subjects sub ON c.subject_id = sub.subject_id
         JOIN grades g ON g.grade = s.grade
@@ -22,11 +21,11 @@ class ScoreDAO:
         WHERE 
             s.grade = %s AND 
             c.mode_id = %s AND -- Online Offline or both
-            (c.level_id = %s OR c.level_id = 3) AND -- SL HL or both
+            (%s = 3 OR sc.level_id = %s) AND -- If SL/HL (3), show all; otherwise match student's level
             sub.subject_id = %s
         ORDER BY s.name
         """
 
-        params = week_dates + [grade, mode_id, level_id, subject_id]
+        params = week_dates + [grade, mode_id, level_id, level_id, subject_id]
 
         return self.db.fetch_all(query, params)

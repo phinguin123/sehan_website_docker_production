@@ -143,7 +143,33 @@ class Homework(Resource):
     @homework_ns.marshal_list_with(homework_get_model)
     @jwt_required()
     def get(self):
-        """Get all homework list created (admin only)"""
+        """Get all homework list created (admin only) or filtered by subject (student)"""
+        subject = request.args.get("subject")
+        
+        if subject:
+            # Student requesting homework for a specific subject
+            from flask_jwt_extended import get_jwt, get_jwt_identity
+            from urllib.parse import unquote
+            from utils.utils import get_subject_id_by_name
+            
+            subject = unquote(subject)
+            grade = get_jwt().get("grade")
+            student_id = get_jwt_identity()
+            
+            if not grade:
+                abort(400, "Grade not set for student")
+            
+            try:
+                subject_info = get_subject_id_by_name(subject)
+                subject_id = subject_info["subject_id"]
+            except:
+                abort(404, f"Subject '{subject}' not found")
+            
+            # Get homework filtered by subject and student's level
+            return homework_service.get_homework_by_subject_for_student(
+                student_id, subject_id, grade
+            )
+        
         return homework_service.get_all_homework()
 
     @homework_ns.expect(homework_post_model)
@@ -158,8 +184,13 @@ class Homework(Resource):
 
         if file:
             timestamp = get_current_time().strftime("%Y%m%d%H%M%S")
-            filename = f"{timestamp}_{file.filename}"
-            file_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+            # Sanitize filename: replace spaces and special characters
+            safe_filename = file.filename.replace(" ", "_").replace("/", "_").replace("\\", "_")
+            filename = f"{timestamp}_{safe_filename}"
+            upload_folder = current_app.config["UPLOAD_FOLDER"]
+            # Ensure directory exists
+            os.makedirs(upload_folder, exist_ok=True)
+            file_path = os.path.join(upload_folder, filename)
             file.save(file_path)
 
         new_homework = request.form
@@ -190,6 +221,43 @@ class Homework(Resource):
             abort(400, message=str(e))
 
 
+@homework_ns.route("/averages")
+class HomeworkAverages(Resource):
+    def get(self):
+        """Get homework average marks per subject for a grade"""
+        grade_id = request.args.get("gradeID")
+        
+        if not grade_id:
+            abort(400, "gradeID parameter is required")
+        
+        try:
+            query = """
+                SELECT sub.subject_name, 
+                    IFNULL(AVG(shs.raw_marks), 0) AS average_marks
+                FROM homework h
+                JOIN subjects sub ON h.subject_id = sub.subject_id
+                LEFT JOIN student_homework_submission shs 
+                    ON h.homework_id = shs.homework_id 
+                    AND shs.submission_date = (
+                        SELECT MAX(submission_date)
+                        FROM student_homework_submission
+                        WHERE homework_id = h.homework_id
+                        AND student_id = shs.student_id
+                    )
+                WHERE h.type = 'Homework'
+                AND h.grade_id = %s
+                GROUP BY sub.subject_name
+                ORDER BY sub.subject_name
+            """
+            result = db_helper.fetch_all(query, (grade_id,))
+            
+            homework_average_marks = [row["average_marks"] for row in result]
+            
+            return {"homeworkAverageMarks": homework_average_marks}, 200
+        except Exception as e:
+            abort(500, f"Error fetching homework averages: {str(e)}")
+
+
 @homework_ns.route("/<int:homework_id>")
 class HomeworkDetail(Resource):
     @homework_ns.expect(homework_post_model)
@@ -206,8 +274,13 @@ class HomeworkDetail(Resource):
             bad_chars_pattern = re.compile(r'[<>#%]')
             if bad_chars_pattern.search(file.filename):
                 return {"message": "File name should not contain any special characters!"}, 400
-            filename = f"{timestamp}_{file.filename}"
-            file_path = os.path.join(current_app.config["UPLOAD_FOLDER"], filename)
+            # Sanitize filename: replace spaces and special characters
+            safe_filename = file.filename.replace(" ", "_").replace("/", "_").replace("\\", "_")
+            filename = f"{timestamp}_{safe_filename}"
+            upload_folder = current_app.config["UPLOAD_FOLDER"]
+            # Ensure directory exists
+            os.makedirs(upload_folder, exist_ok=True)
+            file_path = os.path.join(upload_folder, filename)
             file.save(file_path)
         else:
             # if no file is uploaded, keep the existing filename

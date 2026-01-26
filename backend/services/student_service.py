@@ -326,8 +326,40 @@ class StudentService:
         elif 10 < time_difference_minutes <= 30:
             status = "late"
         else:
-            return {"message", "too late!"}, 400
+            return {"message": "too late!"}, 400
 
         return self.attendance_dao.submit_attendance(
             student_id, attendance_date, status, attendance_data
         )
+
+    def delete_student(self, student_id):
+        """Delete a student and all related records"""
+        # Check if student exists first
+        student = self.student_dao.get_student_by_id(student_id)
+        if not student:
+            raise ValueError("Student with the specified ID not found")
+        
+        connection = self.student_dao.db.get_connection()
+        
+        try:
+            with connection.cursor() as cursor:
+                # Disable foreign key checks temporarily to handle cascading deletes
+                cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+                
+                # Delete related records first (student_homework_submission doesn't have CASCADE)
+                cursor.execute("DELETE FROM student_homework_submission WHERE student_id = %s", (student_id,))
+                
+                # Delete student (will cascade to student_classes, attendance, etc. due to ON DELETE CASCADE)
+                cursor.execute("DELETE FROM students WHERE student_id = %s", (student_id,))
+                
+                # Re-enable foreign key checks
+                cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+                
+                connection.commit()
+        except Exception as e:
+            connection.rollback()
+            raise
+        finally:
+            connection.close()
+        
+        return {"message": "Student deleted successfully"}

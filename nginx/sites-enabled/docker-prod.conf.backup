@@ -1,0 +1,213 @@
+# Production Nginx Configuration
+# Uses actual SSL certificates (not certbot)
+
+# HTTP to HTTPS redirect for sehanibp.kr
+server {
+    listen 80;
+    server_name sehanibp.kr www.sehanibp.kr;
+    return 301 https://$host$request_uri;
+}
+
+# HTTP to HTTPS redirect for dev.sehanibp.kr
+server {
+    listen 80;
+    server_name dev.sehanibp.kr;
+    return 301 https://$host$request_uri;
+}
+
+# Production server - sehanibp.kr
+server {
+    listen 443 ssl http2;
+    server_name sehanibp.kr www.sehanibp.kr;
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $backend_upstream backend:5000;
+    
+    # Preserve original request URI for file serving
+    set $original_uri $request_uri;
+
+    # SSL certificate paths (actual certificates, not certbot)
+    ssl_certificate /etc/ssl/sehanibp.kr/www_sehanibp.kr_combined.crt;
+    ssl_certificate_key /etc/ssl/sehanibp.kr/www_sehanibp.kr.key;
+
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Proxy /get-week-number to backend (must come before / location)
+    location = /get-week-number {
+        proxy_pass http://$backend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # API reverse proxy to Flask backend - specific route for files
+    # Must come before the general /api/ location block to match first
+    # Use prefix location (not regex) to avoid URL decoding issues
+    location /api/files/ {
+        # Use $request_uri which preserves the original URL encoding
+        # This ensures %20 (space) stays as %20 and doesn't get decoded
+        proxy_pass http://$backend_upstream$request_uri;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # API reverse proxy to Flask backend - general API routes
+    location ~ ^/api/(.*)$ {
+        # Preserve /api/ prefix when passing to backend
+        proxy_pass http://$backend_upstream/api/$1$is_args$args;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # Proxy /student/ routes to backend (for endpoints like /student/getName)
+    location /student/ {
+        proxy_pass http://$backend_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # Frontend static files (served by frontend container) - must be last
+    location / {
+        proxy_pass http://frontend:80;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        client_max_body_size 100m;
+        # SPA routing is handled by the frontend container
+    }
+}
+
+# Development server - dev.sehanibp.kr
+server {
+    listen 443 ssl http2;
+    server_name dev.sehanibp.kr;
+    resolver 127.0.0.11 valid=30s ipv6=off;
+    set $backend_dev_upstream backend:5001;
+
+    # SSL certificate paths (using production certificate for dev)
+    ssl_certificate /etc/ssl/sehanibp.kr/www_sehanibp.kr_combined.crt;
+    ssl_certificate_key /etc/ssl/sehanibp.kr/www_sehanibp.kr.key;
+
+    # SSL configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers HIGH:!aNULL:!MD5;
+    ssl_prefer_server_ciphers on;
+
+    # Proxy /get-week-number to backend (dev) - must come before / location
+    location = /get-week-number {
+        proxy_pass http://$backend_dev_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # API reverse proxy to Flask backend (dev)
+    location /api/ {
+        rewrite ^/api(/.*)$ $1 break;
+        proxy_pass http://$backend_dev_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # Proxy /student/ routes to backend (for endpoints like /student/getName)
+    location /student/ {
+        proxy_pass http://$backend_dev_upstream;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        client_max_body_size 100m;
+
+        proxy_connect_timeout 240;
+        proxy_send_timeout 240;
+        proxy_read_timeout 240;
+        send_timeout 240;
+    }
+
+    # Frontend dev server (Vite) - must be last
+    location / {
+        proxy_pass http://frontend:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        client_max_body_size 100m;
+
+        types {
+            application/javascript js jsx mjs;
+        }
+    }
+
+    # Security: Block access to sensitive directories
+    location ~ ^/(.git|flask_server|env|venv)/ {
+        deny all;
+    }
+
+    # Block Python files
+    location ~ \.py$ {
+        deny all;
+    }
+}
+

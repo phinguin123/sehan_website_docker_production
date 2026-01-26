@@ -74,3 +74,29 @@ class ParentsDetails(Resource):
         """Delete a parent by ID"""
         parent_service.delete_parent(parent_id)
         return {"message": "Parent deleted successfully"}, 204
+
+
+@parents_ns.route("/me/children")
+class ParentChildren(Resource):
+    @jwt_required()
+    def get(self):
+        """Get list of children for logged-in parent"""
+        from flask_jwt_extended import get_jwt_identity
+        from utils.db import DBHelper
+        from flask_restx import abort
+        
+        parent_id = get_jwt_identity()
+        
+        try:
+            db_helper = DBHelper()
+            query = """
+                SELECT s.student_id, s.name, s.grade, s.school, s.email
+                FROM students s
+                JOIN parents_students ps ON s.student_id = ps.student_id
+                WHERE ps.parent_id = %s
+                ORDER BY s.name
+            """
+            children = db_helper.fetch_all(query, (parent_id,))
+            return children, 200
+        except Exception as e:
+            abort(500, f"Error fetching children: {str(e)}")

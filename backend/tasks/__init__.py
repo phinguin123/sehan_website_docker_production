@@ -1,2 +1,2 @@
 # Tasks package
-from .session_reminder_tasks import send_session_reminder
+# session_reminder_tasks removed - Private Tutoring feature deprecated
