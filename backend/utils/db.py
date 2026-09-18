@@ -5,7 +5,7 @@ import os
 # Local MySQL Configuration
 LOCAL_DB_HOST = os.environ.get("DATABASE_HOST", "db")  # 'db' is the service name in docker-compose
 LOCAL_DB_USER = os.environ.get("MYSQL_USER", "admin")
-LOCAL_DB_PASSWORD = os.environ.get("MYSQL_PASSWORD", "12345678")
+LOCAL_DB_PASSWORD = os.environ["MYSQL_PASSWORD"]  # no fallback: fail fast if unset
 LOCAL_DB_DATABASE = os.environ.get("MYSQL_DATABASE", "sehanDB")
 LOCAL_DB_PORT = int(os.environ.get("DATABASE_PORT", "3306"))
 

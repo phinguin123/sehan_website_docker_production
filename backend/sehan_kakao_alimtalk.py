@@ -24,8 +24,8 @@ if not logger.handlers:
 
 # URL and authentication details
 url = "https://api.tason.com/tas-api/kakaosend"
-tas_id = "koysr20@gmail.com"  # Replace with your tas_id
-auth_key = "***REMOVED-TASON-KEY***"
+tas_id = os.environ["TASON_ID"]
+auth_key = os.environ["TASON_AUTH_KEY"]
 # attendance_template_code = "C_YO_002_02_62706"
 student_report_template_code = "C_YO_002_02_62707"
 before_summer_template_code = "C_YO_002_02_67647"

@@ -51,7 +51,7 @@ view_logs() {
 # Function to connect to MySQL
 connect_mysql() {
     echo "🔌 Connecting to MySQL..."
-    docker compose exec db mysql -u admin -p***REMOVED-DB-PASSWORD*** sehanDB
+    docker compose exec db mysql -u "${MYSQL_USER:?set MYSQL_USER}" -p"${MYSQL_PASSWORD:?set MYSQL_PASSWORD}" "${MYSQL_DATABASE:-sehanDB}"
 }
 
 # Function to reset database (WARNING: This will delete all data)

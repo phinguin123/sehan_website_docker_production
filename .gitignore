@@ -81,3 +81,27 @@ env.local
 
 *.zip
 *.pdf
+# ==== secrets / credentials (added during security cleanup) ====
+github_token
+*.token
+*.pem
+*.key
+.env*
+!.env.example
+env.local
+env.*.local
+/backend/kakao_api_config.py
+/backend/tason_config.py
+/backend/ftp_config.py
+
+# ==== logs & build noise ====
+*.log
+/logs/
+/backend/logs/
+/frontend/vite.log
+build.log
+/backend/celerybeat-schedule
+
+# ==== db dumps (may contain personal data) ====
+*.sql.gz
+golden_bootcamp_start.sql

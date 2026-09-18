@@ -89,7 +89,7 @@ def create_app():
     app.json_encoder = DecimalEncoder
     
     # JWT Configuration
-    app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "***REMOVED-JWT-SECRET***")
+    app.config["JWT_SECRET_KEY"] = os.environ["JWT_SECRET_KEY"]  # no fallback: fail fast if unset
     app.config["JWT_TOKEN_LOCATION"] = ["headers", "cookies"]
     app.config["JWT_COOKIE_SECURE"] = False
     app.config["JWT_COOKIE_CSRF_PROTECT"] = False

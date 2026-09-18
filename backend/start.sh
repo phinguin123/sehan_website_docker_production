@@ -13,7 +13,7 @@ echo "Waiting for database to be ready..."
 # Use environment variables for database connection (supports both local Docker and RDS)
 DB_HOST="${DATABASE_HOST:-db}"
 DB_USER="${MYSQL_USER:-admin}"
-DB_PASSWORD="${MYSQL_PASSWORD:-***REMOVED-DB-PASSWORD***}"
+DB_PASSWORD="${MYSQL_PASSWORD:?MYSQL_PASSWORD is not set}"
 DB_NAME="${MYSQL_DATABASE:-sehanDB}"
 DB_PORT="${DATABASE_PORT:-3306}"
 
